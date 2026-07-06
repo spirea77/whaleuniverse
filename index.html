@@ -118,6 +118,22 @@
   }
   .slide-controls button:hover { border-color: var(--star-gold); }
 
+  .whale-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .whale-stage {
+    position: relative; width: 100%; max-width: 900px; aspect-ratio: 1000/420;
+    background: var(--cosmic-card); border: 1px solid rgba(136,120,200,0.35);
+    border-radius: 18px; overflow: hidden; box-shadow: 0 30px 60px -24px rgba(0,0,0,0.6);
+  }
+  .whale-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .whale-dot {
+    position: absolute; transform: translate(-50%, -50%);
+    border-radius: 50%; object-fit: cover; cursor: pointer;
+    border: 2px solid var(--star-gold); box-shadow: 0 0 10px rgba(232,196,104,0.5);
+    animation: rise 0.5s ease both; transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .whale-dot:hover { transform: translate(-50%, -50%) scale(1.35); box-shadow: 0 0 18px rgba(232,196,104,0.85); z-index: 5; }
+  .whale-caption { font-size: 12.5px; color: var(--med-gray); text-align: center; }
+
   .empty { text-align: center; padding: 70px 20px; color: var(--med-gray); border: 1px dashed rgba(136,120,200,0.4); border-radius: 18px; }
   .empty .glyph { font-size: 34px; margin-bottom: 14px; }
   .empty p { font-size: 14px; line-height: 1.7; margin: 0; }
@@ -167,6 +183,7 @@
       <div class="view-toggle">
         <button id="viewGridBtn" class="active">한번에 다 보기</button>
         <button id="viewSlideBtn">슬라이드로 보기</button>
+        <button id="viewWhaleBtn">고래 모양으로 보기</button>
       </div>
     </div>
   </div>
@@ -192,6 +209,7 @@
   const tabsRoot = document.getElementById('tabsRoot');
   const viewGridBtn = document.getElementById('viewGridBtn');
   const viewSlideBtn = document.getElementById('viewSlideBtn');
+  const viewWhaleBtn = document.getElementById('viewWhaleBtn');
   const refreshBtn = document.getElementById('refreshBtn');
   const setupWarning = document.getElementById('setupWarning');
 
@@ -272,6 +290,7 @@
   function updateViewToggle() {
     viewGridBtn.classList.toggle('active', viewMode === 'grid');
     viewSlideBtn.classList.toggle('active', viewMode === 'slide');
+    viewWhaleBtn.classList.toggle('active', viewMode === 'whale');
   }
 
   async function loadGallery() {
@@ -299,7 +318,9 @@
       }
 
       slideIndex = 0;
-      if (viewMode === 'grid') renderGrid(items); else renderSlideshow(items);
+      if (viewMode === 'grid') renderGrid(items);
+      else if (viewMode === 'slide') renderSlideshow(items);
+      else renderWhale(items);
     } catch (e) {
       galleryRoot.innerHTML = '<div class="empty"><div class="glyph">⚠️</div><p>불러오지 못했어요.<br>저장소 이름(CONFIG.owner/repo)이 맞는지, 저장소가 Public인지 확인해주세요.</p></div>';
     }
@@ -408,6 +429,90 @@
     if (slideTimer) { clearInterval(slideTimer); slideTimer = null; }
   }
 
+  // 고래 모양 윤곽선 경로 (viewBox 0 0 1000 420 기준, 스타일화된 실루엣)
+  const WHALE_PATH = 'M60,210 C40,160 70,120 130,105 C180,92 230,90 270,95 C300,99 320,80 300,60 C290,80 305,95 330,100 C400,90 480,85 560,95 C640,105 710,120 770,140 C800,150 820,155 840,150 L920,90 L860,205 L920,320 L840,270 C800,285 760,295 710,300 C640,310 560,315 480,310 C400,305 340,300 300,310 C320,330 300,350 270,345 C230,340 190,330 150,320 C90,305 45,270 60,210 Z';
+  const WHALE_FIN = 'M545,95 L565,25 L602,98 Z';
+  const WHALE_VBW = 1000, WHALE_VBH = 420;
+
+  function renderWhale(items) {
+    galleryRoot.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'whale-wrap';
+
+    const stage = document.createElement('div');
+    stage.className = 'whale-stage';
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${WHALE_VBW} ${WHALE_VBH}`);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.classList.add('whale-svg');
+
+    const outline = document.createElementNS(svgNS, 'path');
+    outline.setAttribute('d', WHALE_PATH);
+    outline.setAttribute('fill', 'none');
+    outline.setAttribute('stroke', 'var(--star-gold)');
+    outline.setAttribute('stroke-opacity', '0.28');
+    outline.setAttribute('stroke-width', '2');
+    svg.appendChild(outline);
+
+    const fin = document.createElementNS(svgNS, 'path');
+    fin.setAttribute('d', WHALE_FIN);
+    fin.setAttribute('fill', 'none');
+    fin.setAttribute('stroke', 'var(--star-gold)');
+    fin.setAttribute('stroke-opacity', '0.28');
+    fin.setAttribute('stroke-width', '2');
+    svg.appendChild(fin);
+
+    stage.appendChild(svg);
+    wrap.appendChild(stage);
+
+    const caption = document.createElement('div');
+    caption.className = 'whale-caption';
+    wrap.appendChild(caption);
+
+    galleryRoot.appendChild(wrap);
+
+    if (items.length === 0) return;
+
+    // 윤곽선을 따라 사진 개수만큼 점 좌표 계산
+    const total = outline.getTotalLength();
+    const n = items.length;
+    const points = items.map((item, i) => {
+      const len = n === 1 ? 0 : (i / n) * total;
+      const pt = outline.getPointAtLength(len);
+      return { x: pt.x, y: pt.y, item };
+    });
+
+    // 점들을 잇는 은은한 연결선
+    const connector = document.createElementNS(svgNS, 'polyline');
+    connector.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+    connector.setAttribute('fill', 'none');
+    connector.setAttribute('stroke', 'var(--nebula, #8878c8)');
+    connector.setAttribute('stroke-opacity', '0.35');
+    connector.setAttribute('stroke-width', '1');
+    connector.setAttribute('stroke-dasharray', '4 5');
+    svg.insertBefore(connector, outline);
+
+    const dotSize = n > 60 ? 26 : n > 30 ? 34 : n > 12 ? 42 : 52;
+    points.forEach((p, i) => {
+      const img = document.createElement('img');
+      img.src = p.item.url;
+      img.alt = p.item.name;
+      img.className = 'whale-dot';
+      img.style.width = dotSize + 'px';
+      img.style.height = dotSize + 'px';
+      img.style.left = (p.x / WHALE_VBW * 100) + '%';
+      img.style.top = (p.y / WHALE_VBH * 100) + '%';
+      img.style.animationDelay = Math.min(i * 0.02, 0.6) + 's';
+      img.title = p.item.name;
+      img.onclick = () => openModal(p.item);
+      stage.appendChild(img);
+    });
+
+    caption.textContent = `${n}개의 별이 고래를 이루고 있어요`;
+  }
+
   function openModal(item) {
     const bg = document.createElement('div');
     bg.className = 'modal-bg';
@@ -428,6 +533,7 @@
 
   viewGridBtn.onclick = () => { viewMode = 'grid'; loadGallery(); };
   viewSlideBtn.onclick = () => { viewMode = 'slide'; loadGallery(); };
+  viewWhaleBtn.onclick = () => { viewMode = 'whale'; loadGallery(); };
   refreshBtn.onclick = () => { cache = {}; loadGallery(); };
 
   loadGallery();
