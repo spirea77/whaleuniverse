@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리의 우주 · 크루 갤러리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cosmic-deep: #14103a;
+    --cosmic-card: #2a2060;
+    --nebula: #6b5ba8;
+    --star-gold: #e8c468;
+    --pale-gold: #f5e9c8;
+    --pale-lav: #e8e4f5;
+    --white: #ffffff;
+    --med-gray: #a79fce;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: radial-gradient(ellipse at 20% -10%, #2d2563 0%, var(--cosmic-deep) 55%);
+    color: var(--pale-lav);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars span {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: var(--star-gold); opacity: 0.5;
+    animation: twinkle 4s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%,100% { opacity: 0.2; } 50% { opacity: 0.8; } }
+
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 56px 28px 80px; }
+  header { margin-bottom: 40px; }
+  .eyebrow { font-size: 13px; letter-spacing: 0.14em; color: var(--star-gold); font-weight: 500; margin-bottom: 10px; }
+  h1 { font-size: 40px; font-weight: 900; color: var(--white); margin: 0 0 12px; letter-spacing: -0.01em; }
+  .sub { font-size: 15px; color: var(--med-gray); font-weight: 300; max-width: 600px; line-height: 1.6; }
+
+  .setup-warning {
+    margin-top: 20px; padding: 16px 18px; border-radius: 12px;
+    background: rgba(230,154,154,0.12); border: 1px solid rgba(230,154,154,0.4);
+    color: #f0c4c4; font-size: 13px; line-height: 1.6; display: none;
+  }
+
+  .howto {
+    margin-top: 20px; padding: 16px 20px; border-radius: 14px;
+    background: rgba(107,91,168,0.16); border: 1px solid rgba(136,120,200,0.35);
+    font-size: 12.5px; color: var(--pale-lav); line-height: 1.7;
+  }
+  .howto b { color: var(--star-gold); }
+
+  .tabs { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .tab-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(136,120,200,0.35);
+    color: var(--med-gray); font-family: inherit; font-size: 13px; font-weight: 500;
+    padding: 9px 16px; border-radius: 999px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: all 0.15s ease;
+  }
+  .tab-btn:hover { border-color: var(--star-gold); color: var(--pale-gold); }
+  .tab-btn.active { background: var(--star-gold); border-color: var(--star-gold); color: #241b52; font-weight: 700; }
+  .tab-btn .badge { background: rgba(0,0,0,0.18); border-radius: 999px; padding: 1px 7px; font-size: 11px; }
+  .tab-btn.active .badge { background: rgba(36,32,82,0.18); }
+
+  .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 32px 0 20px; }
+  .count-row { display: flex; align-items: baseline; gap: 8px; }
+  .count-row .n { font-size: 22px; font-weight: 900; color: var(--white); }
+  .count-row .l { font-size: 13px; color: var(--med-gray); }
+
+  .right-controls { display: flex; gap: 6px; align-items: center; }
+  .view-toggle { display: flex; gap: 6px; }
+  .view-toggle button, .refresh-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(136,120,200,0.35);
+    color: var(--med-gray); font-family: inherit; font-size: 12.5px;
+    padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .view-toggle button.active { background: var(--nebula); border-color: var(--nebula); color: var(--white); font-weight: 700; }
+  .refresh-btn:hover, .view-toggle button:hover { border-color: var(--star-gold); }
+
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+  .card {
+    background: var(--cosmic-card); border: 1px solid rgba(136,120,200,0.35);
+    border-radius: 16px; overflow: hidden; cursor: pointer; position: relative;
+    box-shadow: 0 14px 34px -18px rgba(0,0,0,0.55);
+    animation: rise 0.5s ease both; transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -16px rgba(232,196,104,0.25); }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .card img { width: 100%; height: 190px; object-fit: cover; display: block; background: rgba(255,255,255,0.04); }
+  .card .meta { padding: 10px 14px 12px; }
+  .card .name { font-size: 12.5px; font-weight: 700; color: var(--pale-gold); }
+
+  .slideshow { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .slide-stage {
+    position: relative; width: 100%; max-width: 720px; aspect-ratio: 4/3;
+    border-radius: 18px; overflow: hidden; background: var(--cosmic-card);
+    border: 1px solid rgba(136,120,200,0.35); box-shadow: 0 30px 60px -24px rgba(0,0,0,0.6);
+  }
+  .slide-stage img { width: 100%; height: 100%; object-fit: contain; background: #0e0b28; }
+  .slide-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(20,16,58,0.55); border: 1px solid rgba(232,196,104,0.4);
+    color: var(--pale-gold); font-size: 20px; width: 44px; height: 44px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .slide-nav:hover { background: rgba(232,196,104,0.25); }
+  .slide-nav.prev { left: 14px; } .slide-nav.next { right: 14px; }
+  .slide-caption { text-align: center; }
+  .slide-caption .n1 { font-size: 14px; font-weight: 700; color: var(--pale-gold); }
+  .slide-caption .n2 { font-size: 12px; color: var(--med-gray); margin-top: 2px; }
+  .slide-controls button {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(136,120,200,0.35);
+    color: var(--pale-lav); font-family: inherit; font-size: 12.5px;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer;
+  }
+  .slide-controls button:hover { border-color: var(--star-gold); }
+
+  .empty { text-align: center; padding: 70px 20px; color: var(--med-gray); border: 1px dashed rgba(136,120,200,0.4); border-radius: 18px; }
+  .empty .glyph { font-size: 34px; margin-bottom: 14px; }
+  .empty p { font-size: 14px; line-height: 1.7; margin: 0; }
+
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(10,8,30,0.86);
+    display: flex; align-items: center; justify-content: center; z-index: 50;
+    padding: 30px; backdrop-filter: blur(2px);
+  }
+  .modal-bg img { max-width: 90vw; max-height: 82vh; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+  .modal-caption { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; color: var(--pale-lav); font-size: 13px; }
+  .modal-close { position: absolute; top: 24px; right: 30px; background: none; border: none; color: var(--white); font-size: 28px; cursor: pointer; line-height: 1; }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 30px; }
+    .wrap { padding: 40px 18px 60px; }
+    .slide-stage { aspect-ratio: 1/1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">CREW GALLERY</div>
+    <h1>우리의 우주</h1>
+    <div class="sub">크루들이 보내준 사진이 하나씩 쌓여, 별처럼 우리의 우주를 채워갑니다.</div>
+    <div class="setup-warning" id="setupWarning">
+      ⚠️ 아직 저장소 정보가 연결되지 않았어요. index.html 안의 <code>CONFIG.owner / CONFIG.repo</code>를 본인의 깃허브 계정·저장소 이름으로 바꿔주세요.
+    </div>
+    <div class="howto">
+      <b>사용법</b> — 크루가 사진을 보내주면, 이 저장소의 <b>photos/해당주차</b> 폴더(예: photos/w1)에 이미지를 업로드해주세요. 새로고침하면 자동으로 갤러리에 나타나요.
+    </div>
+  </header>
+
+  <div class="tabs" id="tabsRoot"></div>
+
+  <div class="toolbar">
+    <div class="count-row">
+      <span class="n" id="countN">0</span>
+      <span class="l" id="countLabel">개의 별이 모였어요</span>
+    </div>
+    <div class="right-controls">
+      <button class="refresh-btn" id="refreshBtn">↻ 새로고침</button>
+      <div class="view-toggle">
+        <button id="viewGridBtn" class="active">한번에 다 보기</button>
+        <button id="viewSlideBtn">슬라이드로 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="galleryRoot"></div>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+(function () {
+  // ============ 설정 : 본인 깃허브 계정/저장소로 바꿔주세요 ============
+  const CONFIG = {
+    owner: 'spirea77',
+    repo: 'crew-gallery',
+    branch: 'main',
+  };
+
+  const galleryRoot = document.getElementById('galleryRoot');
+  const modalRoot = document.getElementById('modalRoot');
+  const countN = document.getElementById('countN');
+  const countLabel = document.getElementById('countLabel');
+  const tabsRoot = document.getElementById('tabsRoot');
+  const viewGridBtn = document.getElementById('viewGridBtn');
+  const viewSlideBtn = document.getElementById('viewSlideBtn');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const setupWarning = document.getElementById('setupWarning');
+
+  const WEEKS = [
+    { id: 'w1', label: '1주차' }, { id: 'w2', label: '2주차' }, { id: 'w3', label: '3주차' },
+    { id: 'w4', label: '4주차' }, { id: 'w5', label: '5주차' }, { id: 'w6', label: '6주차' },
+    { id: 'w7', label: '7주차' }, { id: 'all', label: '전체 (별자리)' },
+  ];
+  const IMG_EXT = /\.(jpe?g|png|gif|webp)$/i;
+
+  let currentWeek = 'w1';
+  let viewMode = 'grid';
+  let currentItems = [];
+  let slideIndex = 0;
+  let slideTimer = null;
+  let cache = {}; // week -> items[]
+
+  if (!CONFIG.owner || !CONFIG.repo) setupWarning.style.display = 'block';
+
+  // 배경 별
+  const starsWrap = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('span');
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = (Math.random() * 4) + 's';
+    s.style.opacity = (0.2 + Math.random() * 0.5).toFixed(2);
+    starsWrap.appendChild(s);
+  }
+
+  function formatName(filename) {
+    const base = filename.replace(IMG_EXT, '');
+    const parts = base.split(/[_\-]/);
+    return parts[0] || '익명';
+  }
+
+  // 깃허브 저장소 폴더 내용을 읽어와서 이미지 목록으로 변환
+  async function fetchWeekFiles(weekId) {
+    if (cache[weekId]) return cache[weekId];
+    const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/photos/${weekId}?ref=${CONFIG.branch}`;
+    const res = await fetch(url);
+    if (res.status === 404) { cache[weekId] = []; return []; } // 폴더가 아직 없을 수 있음
+    if (!res.ok) throw new Error('github fetch failed: ' + res.status);
+    const data = await res.json();
+    const items = (Array.isArray(data) ? data : [])
+      .filter(f => f.type === 'file' && IMG_EXT.test(f.name))
+      .map(f => ({
+        name: formatName(f.name),
+        filename: f.name,
+        url: f.download_url,
+        week: weekId,
+        sha: f.sha,
+      }))
+      .sort((a, b) => a.filename.localeCompare(b.filename));
+    cache[weekId] = items;
+    return items;
+  }
+
+  async function fetchAllWeeks() {
+    const perWeek = await Promise.all(WEEKS.filter(w => w.id !== 'all').map(w => fetchWeekFiles(w.id)));
+    return perWeek.flat();
+  }
+
+  function renderTabs(weekCounts) {
+    tabsRoot.innerHTML = '';
+    WEEKS.forEach((w) => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (w.id === currentWeek ? ' active' : '');
+      const count = w.id === 'all'
+        ? Object.values(weekCounts).reduce((a, b) => a + b, 0)
+        : (weekCounts[w.id] || 0);
+      btn.innerHTML = `<span>${w.label}</span><span class="badge">${count}</span>`;
+      btn.onclick = () => { currentWeek = w.id; loadGallery(); };
+      tabsRoot.appendChild(btn);
+    });
+  }
+
+  function updateViewToggle() {
+    viewGridBtn.classList.toggle('active', viewMode === 'grid');
+    viewSlideBtn.classList.toggle('active', viewMode === 'slide');
+  }
+
+  async function loadGallery() {
+    updateViewToggle();
+    countLabel.textContent = currentWeek === 'all' ? '개의 별이 모였어요 (전체)' : '개의 별이 모였어요';
+    galleryRoot.innerHTML = '<div class="empty"><div class="glyph">✨</div><p>불러오는 중이에요...</p></div>';
+    stopSlideAuto();
+
+    try {
+      const allItems = await fetchAllWeeks();
+      const weekCounts = {};
+      allItems.forEach(it => { weekCounts[it.week] = (weekCounts[it.week] || 0) + 1; });
+      renderTabs(weekCounts);
+
+      const items = currentWeek === 'all' ? allItems : allItems.filter(i => i.week === currentWeek);
+      currentItems = items;
+      countN.textContent = items.length;
+
+      if (items.length === 0) {
+        const msg = currentWeek === 'all'
+          ? '아직 모인 별이 없어요.'
+          : `이번 주 별이 아직 없어요.<br>photos/${currentWeek} 폴더에 사진을 올려보세요.`;
+        galleryRoot.innerHTML = `<div class="empty"><div class="glyph">✨</div><p>${msg}</p></div>`;
+        return;
+      }
+
+      slideIndex = 0;
+      if (viewMode === 'grid') renderGrid(items); else renderSlideshow(items);
+    } catch (e) {
+      galleryRoot.innerHTML = '<div class="empty"><div class="glyph">⚠️</div><p>불러오지 못했어요.<br>저장소 이름(CONFIG.owner/repo)이 맞는지, 저장소가 Public인지 확인해주세요.</p></div>';
+    }
+  }
+
+  function renderGrid(items) {
+    galleryRoot.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'gallery';
+    items.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.animationDelay = Math.min(i * 0.03, 0.4) + 's';
+
+      const img = document.createElement('img');
+      img.src = item.url;
+      img.alt = item.name;
+      img.loading = 'lazy';
+      card.appendChild(img);
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const name = document.createElement('span');
+      name.className = 'name';
+      const weekLabel = (WEEKS.find(w => w.id === item.week) || {}).label || '';
+      name.textContent = item.name + (currentWeek === 'all' && weekLabel ? ' · ' + weekLabel : '');
+      meta.appendChild(name);
+      card.appendChild(meta);
+
+      card.onclick = () => openModal(item);
+      grid.appendChild(card);
+    });
+    galleryRoot.appendChild(grid);
+  }
+
+  function renderSlideshow(items) {
+    galleryRoot.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'slideshow';
+
+    const stage = document.createElement('div');
+    stage.className = 'slide-stage';
+    const img = document.createElement('img');
+    stage.appendChild(img);
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'slide-nav prev'; prevBtn.textContent = '‹';
+    prevBtn.onclick = () => { slideIndex = (slideIndex - 1 + items.length) % items.length; renderSlideshowTick(); };
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'slide-nav next'; nextBtn.textContent = '›';
+    nextBtn.onclick = () => { slideIndex = (slideIndex + 1) % items.length; renderSlideshowTick(); };
+    stage.appendChild(prevBtn);
+    stage.appendChild(nextBtn);
+
+    const caption = document.createElement('div');
+    caption.className = 'slide-caption';
+    const n1 = document.createElement('div'); n1.className = 'n1';
+    const n2 = document.createElement('div'); n2.className = 'n2';
+    caption.appendChild(n1); caption.appendChild(n2);
+
+    const controls = document.createElement('div');
+    controls.className = 'slide-controls';
+    const playBtn = document.createElement('button');
+    playBtn.textContent = '▶ 자동 재생';
+    let playing = false;
+    playBtn.onclick = () => {
+      playing = !playing;
+      playBtn.textContent = playing ? '⏸ 정지' : '▶ 자동 재생';
+      if (playing) startSlideAuto(); else stopSlideAuto();
+    };
+    controls.appendChild(playBtn);
+
+    wrap.appendChild(stage);
+    wrap.appendChild(caption);
+    wrap.appendChild(controls);
+    galleryRoot.appendChild(wrap);
+    renderSlideshowTick();
+
+    document.onkeydown = (ev) => {
+      if (viewMode !== 'slide') return;
+      if (ev.key === 'ArrowLeft') prevBtn.onclick();
+      if (ev.key === 'ArrowRight') nextBtn.onclick();
+    };
+  }
+
+  function renderSlideshowTick() {
+    const img = galleryRoot.querySelector('.slide-stage img');
+    const n1 = galleryRoot.querySelector('.n1');
+    const n2 = galleryRoot.querySelector('.n2');
+    const item = currentItems[slideIndex];
+    if (!img || !item) return;
+    img.src = item.url;
+    const weekLabel = (WEEKS.find(w => w.id === item.week) || {}).label || '';
+    n1.textContent = item.name + (weekLabel ? ' · ' + weekLabel : '');
+    n2.textContent = `${slideIndex + 1} / ${currentItems.length}`;
+  }
+
+  function startSlideAuto() {
+    stopSlideAuto();
+    slideTimer = setInterval(() => {
+      slideIndex = (slideIndex + 1) % currentItems.length;
+      renderSlideshowTick();
+    }, 3200);
+  }
+  function stopSlideAuto() {
+    if (slideTimer) { clearInterval(slideTimer); slideTimer = null; }
+  }
+
+  function openModal(item) {
+    const bg = document.createElement('div');
+    bg.className = 'modal-bg';
+    bg.onclick = (e) => { if (e.target === bg) modalRoot.innerHTML = ''; };
+    const img = document.createElement('img');
+    img.src = item.url;
+    const caption = document.createElement('div');
+    caption.className = 'modal-caption';
+    caption.textContent = item.name;
+    const close = document.createElement('button');
+    close.className = 'modal-close';
+    close.textContent = '✕';
+    close.onclick = () => { modalRoot.innerHTML = ''; };
+    bg.appendChild(close); bg.appendChild(img); bg.appendChild(caption);
+    modalRoot.innerHTML = '';
+    modalRoot.appendChild(bg);
+  }
+
+  viewGridBtn.onclick = () => { viewMode = 'grid'; loadGallery(); };
+  viewSlideBtn.onclick = () => { viewMode = 'slide'; loadGallery(); };
+  refreshBtn.onclick = () => { cache = {}; loadGallery(); };
+
+  loadGallery();
+})();
+</script>
+
+</body>
+</html>
