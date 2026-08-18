@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>우주에서 피어나는 정원 — 고래자리</title>
+<meta property="og:title" content="우주에서 피어나는 정원">
+<meta property="og:description" content="일곱 명의 작가 · 일곱 주의 별 — 우주를 헤엄치는 고래의 등 위에, 그림이 별꽃으로 피어납니다">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#080a1e;
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,system-ui,sans-serif;color:#e9e4ff}
+  #sky{position:fixed;inset:0;background:
+    radial-gradient(ellipse at 22% 18%,rgba(64,58,150,.45),transparent 60%),
+    radial-gradient(ellipse at 80% 80%,rgba(26,78,140,.35),transparent 60%),
+    linear-gradient(#0b0f2a,#070818)}
+  #tw{position:fixed;inset:0}
+  #stage{position:fixed;inset:0;overflow:hidden}
+  #board{position:absolute;top:0;left:0;width:1000px;height:620px;transform-origin:0 0;
+    transition:transform 1.4s cubic-bezier(.4,0,.2,1)}
+  #lines{position:absolute;top:0;left:0;width:1000px;height:620px;overflow:visible}
+  .star{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+    overflow:hidden;cursor:pointer;background:#141033;
+    box-shadow:0 0 12px rgba(255,214,140,.6),0 0 30px rgba(255,196,110,.32);
+    transition:transform .3s,box-shadow .3s;opacity:0;animation:pop .8s forwards}
+  @keyframes pop{to{opacity:1}}
+  .star img{width:100%;height:100%;object-fit:cover;display:block}
+  .star:hover{transform:scale(1.35);z-index:6;
+    box-shadow:0 0 20px rgba(255,225,160,.95),0 0 52px rgba(150,200,255,.55)}
+  .star.focus{z-index:6;box-shadow:0 0 24px rgba(255,232,175,1),0 0 66px rgba(150,205,255,.7)}
+  header{position:fixed;top:0;left:0;right:0;z-index:20;padding:16px 20px 30px;pointer-events:none;
+    background:linear-gradient(rgba(8,10,30,.85),transparent)}
+  h1{font-size:18px;font-weight:700;letter-spacing:.04em;color:#ffd98a;display:inline-block}
+  header span{font-size:12px;color:#9d95c8;margin-left:12px}
+  #bar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:8px;justify-content:center;
+    flex-wrap:wrap;padding:14px 12px calc(18px + env(safe-area-inset-bottom));
+    background:linear-gradient(transparent,rgba(8,10,30,.9) 50%)}
+  button{font-family:inherit;font-size:13px;padding:9px 16px;border-radius:999px;cursor:pointer;
+    color:#efe9ff;background:rgba(58,48,116,.55);border:1px solid rgba(178,160,255,.35);
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:.18s}
+  button:hover{background:rgba(92,72,178,.7);border-color:#ffd98a;color:#ffe9bd}
+  #count{align-self:center;font-size:12px;color:#9d95c8;padding-left:4px}
+  #grid{position:fixed;inset:0;z-index:30;display:none;overflow-y:auto;
+    padding:74px 16px 92px;background:rgba(8,10,30,.97)}
+  #grid.on{display:block}
+  #gw{display:grid;gap:11px;max-width:1180px;margin:0 auto;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  #gw img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;
+    border:1px solid rgba(178,160,255,.25);transition:.18s}
+  #gw img:hover{border-color:#ffd98a;transform:translateY(-3px)}
+  #modal{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(4,5,16,.95);padding:30px;cursor:zoom-out}
+  #modal.on{display:flex}
+  #mimg{max-width:92vw;max-height:80vh;border-radius:12px;box-shadow:0 0 60px rgba(140,120,255,.3)}
+  #cap{position:fixed;bottom:24px;left:0;right:0;text-align:center;font-size:13px;color:#aa9fd8}
+  #hint{position:fixed;bottom:66px;left:0;right:0;text-align:center;font-size:11.5px;color:#7d76a8;z-index:19}
+  @media(max-width:640px){h1{font-size:15px}header span{display:none}.star{width:36px;height:36px;margin:-18px 0 0 -18px}}
+</style>
+</head>
+<body>
+<div id="sky"></div><canvas id="tw"></canvas>
+<div id="stage"><div id="board"><svg id="lines"></svg></div></div>
+
+<header><h1>우주에서 피어나는 정원</h1><span>일곱 명의 작가 · 일곱 주의 별 — 우주를 헤엄치는 고래의 등 위에, 그림이 별꽃으로 피어납니다</span></header>
+
+<div id="hint">별을 누르면 크게 볼 수 있습니다</div>
+<div id="bar">
+  <button id="bTour">▶ 투어 시작</button>
+  <button id="bFit">전체 보기</button>
+  <button id="bGrid">격자로 보기</button>
+  <span id="count">별 0 / 0</span>
+</div>
+
+<div id="grid"><div id="gw"></div></div>
+<div id="modal"><img id="mimg" alt=""><div id="cap"></div></div>
+
+<script>
+const POINTS=[[178.0, 296.0], [206.4, 251.8], [246.8, 219.9], [293.8, 197.8], [344.9, 185.6], [397.0, 180.5], [449.4, 178.3], [501.8, 181.4], [554.2, 185.5], [606.3, 192.5], [658.3, 199.8], [709.8, 209.8], [761.2, 220.5], [812.0, 234.0], [186.0, 352.0], [211.6, 391.8], [247.0, 420.9], [289.3, 442.2], [336.0, 450.0], [382.9, 456.0], [430.3, 456.0], [477.6, 455.2], [524.8, 451.3], [571.9, 446.6], [618.6, 438.5], [665.1, 429.7], [711.0, 417.9], [756.2, 404.1], [800.0, 386.0], [858.0, 196.0], [893.0, 155.4], [924.5, 112.1], [960.0, 72.0], [850.0, 418.0], [885.9, 452.1], [919.2, 488.8], [956.0, 522.0], [404.0, 516.0], [434.7, 561.7], [482.7, 588.7], [537.4, 595.4], [592.0, 586.0], [118.0, 286.0], [120.0, 360.0], [258.0, 302.0], [276.0, 124.0], [257.4, 79.0], [298.1, 50.0], [342.0, 26.0]];
+const GROUPS=[["back", 0, 14], ["belly", 14, 15], ["fluke_u", 29, 4], ["fluke_d", 33, 4], ["fin", 37, 5], ["jaw", 42, 2], ["eye", 44, 1], ["spout", 45, 4]];
+const BW=1000, BH=620;
+const board=document.getElementById('board'), svg=document.getElementById('lines'),
+      gw=document.getElementById('gw'), modal=document.getElementById('modal'),
+      mimg=document.getElementById('mimg'), cap=document.getElementById('cap');
+let els=[], FILES=[];
+
+const ns="http://www.w3.org/2000/svg";
+GROUPS.forEach(([n,s,c])=>{
+  if(c<2) return;
+  const pl=document.createElementNS(ns,'polyline');
+  pl.setAttribute('points',POINTS.slice(s,s+c).map(p=>p.join(',')).join(' '));
+  pl.setAttribute('fill','none'); pl.setAttribute('stroke','rgba(176,198,255,.26)');
+  pl.setAttribute('stroke-width','1.1'); pl.setAttribute('stroke-dasharray','4 6');
+  svg.appendChild(pl);
+});
+
+function apply(s,x,y){ board.style.transform=`translate(${innerWidth/2-s*x}px,${innerHeight/2-s*y}px) scale(${s})`; }
+function fit(){ apply(Math.min(innerWidth/BW, innerHeight/(BH+120))*0.92, BW/2, BH/2-14);
+  els.forEach(e=>e.classList.remove('focus')); }
+function zoomTo(i){ els.forEach(e=>e.classList.remove('focus')); els[i].classList.add('focus');
+  apply(Math.min(innerWidth,innerHeight)/210, POINTS[i][0], POINTS[i][1]); }
+
+let tour=null;
+function stop(){ if(tour){clearTimeout(tour);tour=null;document.getElementById('bTour').textContent='▶ 투어 시작';} }
+document.getElementById('bTour').onclick=function(){
+  if(tour){ stop(); fit(); return; }
+  this.textContent='■ 투어 정지'; let i=0;
+  (function step(){ if(i>=els.length){stop();fit();return;} zoomTo(i++); tour=setTimeout(step,2600); })();
+};
+document.getElementById('bFit').onclick=()=>{stop();fit();};
+document.getElementById('bGrid').onclick=()=>document.getElementById('grid').classList.toggle('on');
+addEventListener('resize',()=>{ if(!tour) fit(); });
+function open(i){ mimg.src='full/'+FILES[i]; cap.textContent=(i+1)+' / '+FILES.length; modal.classList.add('on'); }
+modal.onclick=()=>modal.classList.remove('on');
+addEventListener('keydown',e=>{ if(e.key==='Escape'){modal.classList.remove('on');
+  document.getElementById('grid').classList.remove('on');stop();fit();} });
+
+fetch('list.json').then(r=>r.json()).then(list=>{
+  FILES=list;
+  list.slice(0,POINTS.length).forEach((f,i)=>{
+    const d=document.createElement('div'); d.className='star';
+    d.style.left=POINTS[i][0]+'px'; d.style.top=POINTS[i][1]+'px';
+    d.style.animationDelay=(i*45)+'ms';
+    const im=new Image(); im.src='thumb/'+f; im.loading='lazy'; im.alt='작품 '+(i+1);
+    d.appendChild(im); d.onclick=e=>{e.stopPropagation();open(i);};
+    board.appendChild(d); els.push(d);
+    const g=new Image(); g.src='thumb/'+f; g.loading='lazy'; g.onclick=()=>open(i); gw.appendChild(g);
+  });
+  document.getElementById('count').textContent=`별 ${list.length} / ${POINTS.length}`;
+  fit();
+}).catch(()=>{ document.getElementById('count').textContent='목록을 불러오지 못했습니다'; });
+
+const cv=document.getElementById('tw'), cx=cv.getContext('2d'); let bs=[];
+function bg(){ cv.width=innerWidth; cv.height=innerHeight; bs=[];
+  for(let i=0;i<170;i++) bs.push({x:Math.random()*cv.width,y:Math.random()*cv.height,
+    r:Math.random()*1.2+.2,p:Math.random()*6.3,s:Math.random()*.018+.005}); }
+bg(); addEventListener('resize',bg);
+(function loop(){ cx.clearRect(0,0,cv.width,cv.height);
+  bs.forEach(b=>{b.p+=b.s;cx.beginPath();cx.fillStyle=`rgba(224,232,255,${.22+Math.abs(Math.sin(b.p))*.6})`;
+    cx.arc(b.x,b.y,b.r,0,6.3);cx.fill();});
+  requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>
